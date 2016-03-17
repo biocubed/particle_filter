@@ -26,6 +26,7 @@ public:
 	void generateParctiles(double i);
 	void resample();
 	CatheterPose getMeanParticle();
+	CatheterPose getBestPartcle();
 	bool getCov(double *c); 
 
 private:
