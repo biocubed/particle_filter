@@ -1,5 +1,4 @@
 #include <particle_filter/ParticleFilter.h>
-#include <random>
 #include <math.h>
 
 ParticleFilter::ParticleFilter(int n):nm_(n)
@@ -7,7 +6,8 @@ ParticleFilter::ParticleFilter(int n):nm_(n)
 	i_=0;
 	Catheters_.resize(nm_);
 	weights_.resize(nm_);
-	covs_.resize(4);
+	vars_.resize(4);
+	srand(time(NULL));
 }
 
 bool ParticleFilter::setWeights(std::vector<double> w)
@@ -39,34 +39,90 @@ void ParticleFilter::generateParctiles(double i=0)
 
 double ParticleFilter::numericSolver(double i)
 {
-	double alpha_z=-3.14; // initial solution is -3.14
-	double alpha_z_n=-3.14;
+	double alpha_z; // initial solution is -3.14
+	double alpha_z_n;
 	Eigen::Vector3d t_B;
 	Eigen::Vector3d M_z;
 	Eigen::Vector3d j(0,1,0);
-	Eigen::vector3d g(9.8,0,0);
+	Eigen::Vector3d g(9.8,0,0);
 	double err=100;
 	
-	while(abs(err)>0.15)
-	{
-		alpha_z=alpha_z_n;
-		t_B<<cos(alpha_z),sin(alpha_z),0;
-		M_z=N*i*A*t_B.cross(B)-l/alpha_z*m*j.cross(g);
-		alpha_z_n=M_z(2)/E/I;
-		err=alpha_z-alpah_z_n;
+	if (i>0 | i == 0)
+	{	
+		alpha_z=3.12;
+		alpha_z_n=3.12;
+		while(err>0.002)
+		{
+			t_B<<cos(alpha_z),sin(alpha_z),0;
+		//	ROS_INFO_STREAM("t_B:"<<t_B.transpose()<<std::endl);
+			M_z=N*i*A*t_B.cross(B)-l_AB/alpha_z*m*j.cross(g);
+
+		//	Eigen::Vector3d M_B; 
+		//	M_z=N*i*A*t_B.cross(B);
+		//	ROS_INFO_STREAM("M_B:"<<M_B.transpose()<<std::endl);
+
+		//	Eigen::Vector3d M_G;
+		//	M_G=-l_AB/alpha_z*m*j.cross(g);
+		//	ROS_INFO_STREAM("M_G:"<<M_G.transpose()<<std::endl);
+			
+			alpha_z_n=M_z(2)/E/I;
+			err=alpha_z-alpha_z_n;
+			if (err<0)
+				err=-err; // abs() is bad
+		//	ROS_INFO("err is %f",err);
+		//	ROS_INFO("alpha_z: %f",alpha_z);
+		//	ROS_INFO("alpha_z_n: %f",alpha_z_n);
+			alpha_z-=0.0005;
+		}
 	}
-	
+	else
+	{
+		alpha_z=-3.12;
+		alpha_z_n=-3.12;
+		while(err>0.002)
+		{
+			t_B<<cos(alpha_z),sin(alpha_z),0;
+		//	ROS_INFO_STREAM("t_B:"<<t_B.transpose()<<std::endl);
+
+			M_z=N*i*A*t_B.cross(B)-l_AB/alpha_z*m*j.cross(g);
+
+		//	Eigen::Vector3d M_B; 
+		//	M_z=N*i*A*t_B.cross(B);
+		//	ROS_INFO_STREAM("M_B:"<<M_B.transpose()<<std::endl);
+
+		//	Eigen::Vector3d M_G;
+		//	M_G=-l_AB/alpha_z*m*j.cross(g);
+		//	ROS_INFO_STREAM("M_G:"<<M_G.transpose()<<std::endl);
+
+			alpha_z_n=M_z(2)/E/I;
+			err=alpha_z_n-alpha_z;
+			if (err<0)
+				err=-err; 
+		//	ROS_INFO("err is %f",err);
+		//	ROS_INFO("alpha_z: %f",alpha_z);
+		//	ROS_INFO("alpha_z_n: %f",alpha_z_n);
+			alpha_z+=0.0005;
+		}
+	}
+	return alpha_z;
+}
+
+double ParticleFilter::min_alpha(double a) {
+	ROS_INFO("minminmin");
+    while (a > M_PI) a -= 2.0 * M_PI;
+    while (a < -M_PI) a += 2.0 * M_PI;
+    return a;
 }
 
 double ParticleFilter::sample(double b)
 {
 	double x=0, r=0;
-	for(int j=0, j < 12, j++)
+	for(int j=0; j < 12; j++)
 	{
 		r=(rand()*2.0/RAND_MAX-1.0)*b;
 		x=x+r;
 	}
-	return x;
+	return x/2;
 }
 
 geometry_msgs::Point ParticleFilter::sample(geometry_msgs::Point b, geometry_msgs::Point pt)
