@@ -18,7 +18,7 @@ const double l_AB=0.08; // the length of the AB
 const double l_BC=0.02; // the length of the BC 
 const double m=0.05;  // the mass of the coil set
 const double E=10.15; // Young's modulus
-const double I=0.005; // moment of inertia wrt z axis
+const double I=0.0005; // moment of inertia wrt z axis
 
 struct CatheterPose
 {
@@ -42,8 +42,7 @@ public:
 	CatheterPose getBestPartcle();
 	bool getVar(double *c); 
 
-	
-	double numericSolver(double i); 
+
 private:
 	std::vector<CatheterPose> Catheters_;
 	int nm_; // the number of particles
@@ -54,7 +53,8 @@ private:
 	double sample(double b);
 	geometry_msgs::Point sample(geometry_msgs::Point b, geometry_msgs::Point pt);
 	double min_alpha(double a);
-	
+	double numericSolver(double i);
+
 };
 
 #endif
