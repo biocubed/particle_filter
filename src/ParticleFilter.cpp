@@ -1,5 +1,6 @@
 #include <particle_filter/ParticleFilter.h>
-
+#include <random>
+#include <math.h>
 
 ParticleFilter::ParticleFilter(int n):nm_(n)
 {
@@ -19,13 +20,13 @@ bool ParticleFilter::setWeights(std::vector<double> w)
 	return true;
 }
 
-bool ParticleFilter::setMotionErrors(std::vector<geometry_msgs::Point> covs)
+bool ParticleFilter::setMotionErrors(std::vector<geometry_msgs::Point> vars)
 {
-	if (covs.size()!=covs_.size())
+	if (vars.size()!=vars_.size())
 	{
 		return false;
 	}
-	covs_=covs;
+	vars_=vars;
 	return true;
 }
 
@@ -35,6 +36,48 @@ void ParticleFilter::generateParctiles(double i=0)
 	
 
 }
+
+double ParticleFilter::numericSolver(double i)
+{
+	double alpha_z=-3.14; // initial solution is -3.14
+	double alpha_z_n=-3.14;
+	Eigen::Vector3d t_B;
+	Eigen::Vector3d M_z;
+	Eigen::Vector3d j(0,1,0);
+	Eigen::vector3d g(9.8,0,0);
+	double err=100;
+	
+	while(abs(err)>0.15)
+	{
+		alpha_z=alpha_z_n;
+		t_B<<cos(alpha_z),sin(alpha_z),0;
+		M_z=N*i*A*t_B.cross(B)-l/alpha_z*m*j.cross(g);
+		alpha_z_n=M_z(2)/E/I;
+		err=alpha_z-alpah_z_n;
+	}
+	
+}
+
+double ParticleFilter::sample(double b)
+{
+	double x=0, r=0;
+	for(int j=0, j < 12, j++)
+	{
+		r=(rand()*2.0/RAND_MAX-1.0)*b;
+		x=x+r;
+	}
+	return x;
+}
+
+geometry_msgs::Point ParticleFilter::sample(geometry_msgs::Point b, geometry_msgs::Point pt)
+{
+	geometry_msgs::Point pt_h;
+	pt_h.x = pt.x+sample(b.x);
+	pt_h.y = pt.y+sample(b.y);
+	pt_h.z = pt.z+sample(b.z);
+	return pt_h;
+}
+
 
 geometry_msgs::Point CatheterPose::getBSpline(double s)
 	{
